@@ -1,20 +1,21 @@
-import 'dart:developer';
-import 'dart:io';
-import 'package:http/http.dart' as http;
+// ignore_for_file: file_names
 
+import 'dart:convert';
+import 'dart:html' as html;
+
+import 'package:deep_n_eye/data/models/oct_model.dart';
+import 'package:deep_n_eye/data/repository/oct_result_repository.dart';
 import 'package:deep_n_eye/data/web_services/oct_web_services.dart';
+import 'package:deep_n_eye/presentation/screens/resultScreen.dart';
 import 'package:deep_n_eye/presentation/widgets/submit_button.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 import '../../const/color.dart';
 import '../../const/font_styles.dart';
 import '../../const/size.dart';
-import '../../data/models/oct_model.dart';
+import '../../data/models/model.dart';
 
 class UploadImageScreen extends StatefulWidget {
   const UploadImageScreen({Key? key}) : super(key: key);
@@ -22,41 +23,76 @@ class UploadImageScreen extends StatefulWidget {
   @override
   State<UploadImageScreen> createState() => _UploadImageScreenState();
 }
+Result ? model;
 
 class _UploadImageScreenState extends State<UploadImageScreen> {
-  List<PlatformFile>? _paths;
-  OctResult ?  _octResult;
+  late List<int> _selectedFile;
+  late Uint8List _bytesData;
+  late OctResultWebservices octResultWebservices;
+  String? result;
+  String? message;
 
-  void pickFiles() async {
-    try {
-      _paths = (await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowMultiple: false,
-        onFileLoading: (FilePickerStatus status) => print(status),
-        allowedExtensions: ['png', 'jpg', 'jpeg', 'heic'],
-      ))
-          ?.files;
-    } on PlatformException catch (e) {
-      log('Unsupported operation' + e.toString());
-    } catch (e) {
-      log(e.toString());
-    }
-    setState(() {
-      if (_paths != null) {
-        if (_paths != null) {
-          //passing file bytes and file name for API call
-          _octResult!.oct(_paths!.first.bytes!, _paths!.first.name);
-        }
-      }
+  startWebFilePicker() async {
+    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+    uploadInput.multiple = true;
+    uploadInput.draggable = true;
+    uploadInput.click();
+
+    uploadInput.onChange.listen((e) {
+      final files = uploadInput.files;
+      final file = files![0];
+      final reader = html.FileReader();
+
+      reader.onLoadEnd.listen((e) {
+        _handleResult(reader.result.toString());
+      });
+      reader.readAsDataUrl(file);
     });
   }
 
+  void _handleResult(Object result) {
+    setState(() {
+      _bytesData =
+          const Base64Decoder().convert(result.toString().split(",").last);
+      _selectedFile = _bytesData;
+    });
+  }
+
+  makeRequest() async {
+    var url = Uri.parse("http://127.0.0.1:8000/api/UploadImage");
+
+    Map<String, String> headers = {
+      "Accept": "application/json",
+    };
+    var request = http.MultipartRequest("POST", url);
+    request.headers.addAll(headers);
+    request.files.add(http.MultipartFile.fromBytes('image', _selectedFile,
+        filename: "test.png"));
+    var response = await http.Response.fromStream(await request.send());
+    if (kDebugMode) {
+      print("test");
+      print(response.statusCode);
+    }
+    if (response.statusCode == 200) {
+      setState(() {
+        message = ' image upload with success';
+        print(response.body);
+      });
+      // ToDo : المشكلة هنا في ال model
+       return Result.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+
+      ;
+    } else {
+      setState(() {
+        message = ' image not upload';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
-        //mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(height: height(context, 10)),
           Center(
@@ -67,10 +103,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
           SizedBox(height: height(context, 12)),
           InkWell(
             onTap: () async {
-              pickFiles();
-              print('-----------------');
-              print(_paths);
-              print(_paths);
+              startWebFilePicker();
             },
             child: Container(
               height: height(context, 2),
@@ -112,7 +145,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
           SubmitButton(
               text: 'Next',
               onTap: () async {
-                print(_paths);
+                await makeRequest();
 
                 // Navigator.push(context,
                 //     MaterialPageRoute(builder: (_) => const ResultScreen()));

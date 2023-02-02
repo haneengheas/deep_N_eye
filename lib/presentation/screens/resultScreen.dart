@@ -1,8 +1,12 @@
+// ignore_for_file: file_names
+
 import 'package:deep_n_eye/const/font_styles.dart';
+import 'package:deep_n_eye/data/models/oct_model.dart';
 import 'package:deep_n_eye/presentation/widgets/submit_button.dart';
 import 'package:flutter/material.dart';
 
 import '../../const/size.dart';
+import '../../data/models/model.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({Key? key}) : super(key: key);
@@ -12,6 +16,8 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
+  Result? result;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +48,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     ),
                     decoration: decoration,
                     child: Text(
-                      'Normal foveal pit contour',
+                      '{result!.response!.classes}',
                       style: title4,
                     ),
                   ),
@@ -91,7 +97,9 @@ class _ResultScreenState extends State<ResultScreen> {
             )
           ],
         ),
-        SubmitButton(text: 'Done')
+         SubmitButton(text: 'Done', onTap: (){
+          print(result!.response!.confidence);
+        },)
       ],
     ));
   }

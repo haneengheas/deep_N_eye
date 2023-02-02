@@ -1,4 +1,3 @@
-import 'package:deep_n_eye/presentation/screens/resultScreen.dart';
 import 'package:flutter/material.dart';
 
 import 'presentation/screens/Investigations_screen.dart';
