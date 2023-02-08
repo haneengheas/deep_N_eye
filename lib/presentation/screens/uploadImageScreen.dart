@@ -1,12 +1,9 @@
-// ignore_for_file: file_names
+// ignore_for_file: file_names, avoid_web_libraries_in_flutter
 
 import 'dart:convert';
 import 'dart:html' as html;
 
-import 'package:deep_n_eye/data/models/oct_model.dart';
-import 'package:deep_n_eye/data/repository/oct_result_repository.dart';
 import 'package:deep_n_eye/data/web_services/oct_web_services.dart';
-import 'package:deep_n_eye/presentation/screens/resultScreen.dart';
 import 'package:deep_n_eye/presentation/widgets/submit_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -31,25 +28,21 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
   late OctResultWebservices octResultWebservices;
   String? result;
   String? message;
-
   startWebFilePicker() async {
     html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
     uploadInput.multiple = true;
     uploadInput.draggable = true;
     uploadInput.click();
-
     uploadInput.onChange.listen((e) {
       final files = uploadInput.files;
       final file = files![0];
       final reader = html.FileReader();
-
       reader.onLoadEnd.listen((e) {
         _handleResult(reader.result.toString());
       });
       reader.readAsDataUrl(file);
     });
   }
-
   void _handleResult(Object result) {
     setState(() {
       _bytesData =
@@ -57,10 +50,8 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
       _selectedFile = _bytesData;
     });
   }
-
   makeRequest() async {
     var url = Uri.parse("http://127.0.0.1:8000/api/UploadImage");
-
     Map<String, String> headers = {
       "Accept": "application/json",
     };
@@ -80,8 +71,6 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
       });
       // ToDo : المشكلة هنا في ال model
        return Result.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-
-      ;
     } else {
       setState(() {
         message = ' image not upload';
@@ -146,6 +135,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
               text: 'Next',
               onTap: () async {
                 await makeRequest();
+                print(model!.response!.confidence);
 
                 // Navigator.push(context,
                 //     MaterialPageRoute(builder: (_) => const ResultScreen()));

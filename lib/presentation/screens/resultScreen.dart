@@ -1,7 +1,6 @@
 // ignore_for_file: file_names
 
 import 'package:deep_n_eye/const/font_styles.dart';
-import 'package:deep_n_eye/data/models/oct_model.dart';
 import 'package:deep_n_eye/presentation/widgets/submit_button.dart';
 import 'package:flutter/material.dart';
 
