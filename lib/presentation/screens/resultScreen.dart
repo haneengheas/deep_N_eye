@@ -8,14 +8,15 @@ import '../../const/size.dart';
 import '../../data/models/model.dart';
 
 class ResultScreen extends StatefulWidget {
-  const ResultScreen({Key? key}) : super(key: key);
+  final Result? result;
+
+  const ResultScreen({Key? key, this.result}) : super(key: key);
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  Result? result;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     ),
                     decoration: decoration,
                     child: Text(
-                      '{result!.response!.classes}',
+                      '${widget.result!.response!.classes}',
                       style: title4,
                     ),
                   ),
@@ -96,9 +97,12 @@ class _ResultScreenState extends State<ResultScreen> {
             )
           ],
         ),
-         SubmitButton(text: 'Done', onTap: (){
-          print(result!.response!.confidence);
-        },)
+        SubmitButton(
+          text: 'Done',
+          onTap: () {
+            print(widget.result!.response!.confidence);
+          },
+        )
       ],
     ));
   }

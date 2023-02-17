@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:html' as html;
 
 import 'package:deep_n_eye/data/web_services/oct_web_services.dart';
+import 'package:deep_n_eye/presentation/screens/resultScreen.dart';
 import 'package:deep_n_eye/presentation/widgets/submit_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,16 +21,18 @@ class UploadImageScreen extends StatefulWidget {
   @override
   State<UploadImageScreen> createState() => _UploadImageScreenState();
 }
-Result ? model;
+
+Result? model;
 
 class _UploadImageScreenState extends State<UploadImageScreen> {
   late List<int> _selectedFile;
   late Uint8List _bytesData;
   late OctResultWebservices octResultWebservices;
-  String? result;
+  Result? result;
   String? message;
-  startWebFilePicker() async {
-    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+
+  void startWebFilePicker() async {
+    final uploadInput = html.FileUploadInputElement();
     uploadInput.multiple = true;
     uploadInput.draggable = true;
     uploadInput.click();
@@ -43,38 +46,42 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
       reader.readAsDataUrl(file);
     });
   }
-  void _handleResult(Object result) {
+
+  void _handleResult(String result) {
     setState(() {
-      _bytesData =
-          const Base64Decoder().convert(result.toString().split(",").last);
+      _bytesData = const Base64Decoder().convert(result.split(',').last);
       _selectedFile = _bytesData;
     });
   }
-  makeRequest() async {
-    var url = Uri.parse("http://127.0.0.1:8000/api/UploadImage");
-    Map<String, String> headers = {
-      "Accept": "application/json",
-    };
-    var request = http.MultipartRequest("POST", url);
+
+  Future<Result?> makeRequest() async {
+    final url = Uri.parse('http://127.0.0.1:8000/api/UploadImage');
+    final headers = {'Accept': 'application/json'};
+    final request = http.MultipartRequest('POST', url);
     request.headers.addAll(headers);
-    request.files.add(http.MultipartFile.fromBytes('image', _selectedFile,
-        filename: "test.png"));
-    var response = await http.Response.fromStream(await request.send());
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        _selectedFile,
+        filename: 'test.png',
+      ),
+    );
+    final response = await http.Response.fromStream(await request.send());
     if (kDebugMode) {
-      print("test");
+      print('test');
       print(response.statusCode);
     }
     if (response.statusCode == 200) {
       setState(() {
-        message = ' image upload with success';
+        message = ' image uploaded with success';
         print(response.body);
       });
-      // ToDo : المشكلة هنا في ال model
-       return Result.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      return Result.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     } else {
       setState(() {
-        message = ' image not upload';
+        message = ' image not uploaded';
       });
+      return null;
     }
   }
 
@@ -85,13 +92,14 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
         children: [
           SizedBox(height: height(context, 10)),
           Center(
-              child: Text(
-            'OCT-Investigation',
-            style: title2,
-          )),
+            child: Text(
+              'OCT-Investigation',
+              style: title2,
+            ),
+          ),
           SizedBox(height: height(context, 12)),
           InkWell(
-            onTap: () async {
+            onTap: () {
               startWebFilePicker();
             },
             child: Container(
@@ -99,18 +107,19 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
               width: width(context, 2.3),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               decoration: BoxDecoration(
-                  color: white4,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: lightGray,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: white3,
-                      blurRadius: .5,
-                      spreadRadius: 2,
-                    )
-                  ]),
+                color: white4,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: lightGray,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: white3,
+                    blurRadius: .5,
+                    spreadRadius: 2,
+                  )
+                ],
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -134,11 +143,14 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
           SubmitButton(
               text: 'Next',
               onTap: () async {
-                await makeRequest();
-                print(model!.response!.confidence);
-
-                // Navigator.push(context,
-                //     MaterialPageRoute(builder: (_) => const ResultScreen()));
+                final result = await makeRequest();
+                if (result != null) {
+                  print(result.response!.confidence);
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ResultScreen(result: result)),
+                );
               })
         ],
       ),
